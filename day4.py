@@ -10,6 +10,7 @@ class Day4:
         - Two adjacent digits are the same (like 22 in 122345).
         - Going from left to right, the digits never decrease; they only ever increase or stay the same (like 111123 or 135679).
     """
+    """ Part Two: the two adjacent matching digits are not part of a larger group of matching digits. """
     def __init__(self, input_file):
         self.process(input_file)
 
@@ -30,16 +31,18 @@ class Day4:
             code += 1
             code_str = list(str(code))
             ok = False
-            equal = 0
+            equal = []
             for i in range(0, len(code_str)):
                 c = code_str[i]
                 if i != 0:
                     if prev > c:
                         break
                     elif prev == c:
-                        equal += 1
-                if i == (len(code_str) - 1) and equal != 0:
-                    ok = True
+                        equal.append(int(c))
+                if i == (len(code_str) - 1):
+                    for e in equal:
+                        if equal.count(e) == 1:
+                            ok = True
                 prev = c
             if ok:
                 num += 1
