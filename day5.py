@@ -34,17 +34,7 @@ class Day5:
                 mode.extend([0] * (3 - len(mode)))
             # Add instruction.
             if opcode == 1:
-                # Get arguments.
-                args = []
-                for j in range(1, 4):
-                    args.append(runtime[i + j])
-                # Check for mode.
-                vals = []
-                for j in range(0, 3):
-                    if mode[j] == 0:
-                        vals.append(runtime[args[j]])
-                    else:
-                        vals.append(args[j])
+                args, vals = self.read_params(runtime, i, mode, 3)
                 # Add arguments, and set value to out position.
                 cmd = f"{i}: [{args[2]}] = {vals[0]} + {vals[1]}"
                 runtime[args[2]] = vals[0] + vals[1]
@@ -52,17 +42,7 @@ class Day5:
                 i += 4
             # Multiply instruction.
             elif opcode == 2:
-                # Get arguments.
-                args = []
-                for j in range(1, 4):
-                    args.append(runtime[i + j])
-                # Check for mode.
-                vals = []
-                for j in range(0, 3):
-                    if mode[j] == 0:
-                        vals.append(runtime[args[j]])
-                    else:
-                        vals.append(args[j])
+                args, vals = self.read_params(runtime, i, mode, 3)
                 # Multiply arguments, and set value to out position.
                 cmd = f"{i}: [{args[2]}] = {vals[0]} * {vals[1]}"
                 runtime[args[2]] = vals[0] * vals[1]
@@ -70,27 +50,78 @@ class Day5:
                 i += 4
             # Stdin instruction
             elif opcode == 3:
-                # Get arguments.
-                out = runtime[i + 1]
+                args, vals = self.read_params(runtime, i, mode, 1)
                 # Read input.
-                runtime[out] = int(input(f"$ "))
+                cmd = f"{i}: [{args[0]}] = input"
+                runtime[args[0]] = int(input(f"$ "))
                 # Move to next opcode
                 i += 2
             # Stdout instruction
             elif opcode == 4:
-                # Get arguments.
-                out = runtime[i + 1]
+                args, vals = self.read_params(runtime, i, mode, 1)
                 # Write output.
-                print(f"> {runtime[out]}")
-                if runtime[out] != 0:
-                    print(cmd)
+                cmd = f"{i}: output = [{args[0]}]"
+                print(f"> {runtime[args[0]]}")
                 # Move to next opcode
                 i += 2
+            # Branch if true instruction.
+            elif opcode == 5:
+                args, vals = self.read_params(runtime, i, mode, 2)
+                cmd = f"{i}: cbnz {vals[0]}, {vals[1]}"
+                if vals[0] != 0:
+                    i = vals[1]
+                else:
+                    # Move to next opcode
+                    i += 3
+            # Branch if false instruction.
+            elif opcode == 6:
+                args, vals = self.read_params(runtime, i, mode, 2)
+                cmd = f"{i}: cbz {vals[0]}, {vals[1]}"
+                if vals[0] == 0:
+                    i = vals[1]
+                else:
+                    # Move to next opcode
+                    i += 3
+            # Less than instruction.
+            elif opcode == 7:
+                args, vals = self.read_params(runtime, i, mode, 3)
+                cmd = f"{i}: [{args[2]}] = {vals[0]} < {vals[1]}"
+                if vals[0] < vals[1]:
+                    runtime[args[2]] = 1
+                else:
+                    runtime[args[2]] = 0
+                # Move to next opcode
+                i += 4
+            # Equal instruction.
+            elif opcode == 8:
+                args, vals = self.read_params(runtime, i, mode, 3)
+                cmd = f"{i}: [{args[2]}] = {vals[0]} == {vals[1]}"
+                if vals[0] == vals[1]:
+                    runtime[args[2]] = 1
+                else:
+                    runtime[args[2]] = 0
+                # Move to next opcode
+                i += 4
             # Halt instruction.
             elif opcode == 99:
+                cmd = f"{i}: halt"
                 break
         # Return program output.
         return runtime[0]
+
+    def read_params(self, memory, idx, mode, nb):
+        # Get arguments.
+        args = []
+        for j in range(1, nb + 1):
+            args.append(memory[idx + j])
+        # Check for mode.
+        vals = []
+        for j in range(0, nb):
+            if mode[j] == 0:
+                vals.append(memory[args[j]])
+            else:
+                vals.append(args[j])
+        return args, vals
 
 
 def parse_arguments():
