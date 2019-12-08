@@ -34,6 +34,22 @@ class Day8:
                 min_0 = count
                 layer_0 = layer
         print(f"Part1: {layer_0.count(1) * layer_0.count(2)}")
+        # Generate output image.
+        output = [0] * (self.pixel_wide * self.pixel_tall)
+        for layer in reversed(layers):
+            for i in range(0, len(layer)):
+                if layer[i] == 0 or layer[i] == 1:
+                    output[i] = layer[i]
+        # Print output image.
+        s = ""
+        for t in range(0, self.pixel_tall):
+            for d in output[t * self.pixel_wide:(t+1) * self.pixel_wide]:
+                if d == 0:
+                    s += str(' ')
+                else:
+                    s += str('#')
+            s += str('\n')
+        print(s)
 
 
 def parse_arguments():
