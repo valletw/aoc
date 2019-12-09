@@ -21,6 +21,10 @@ class Day9:
         prog = Intcode(data)
         out = prog.exec([1])
         print(f"Part1: {out}")
+        # Execute program in sensor mode.
+        prog = Intcode(data)
+        out = prog.exec([2])
+        print(f"Part1: {out}")
 
 
 class Intcode:
