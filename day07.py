@@ -24,11 +24,34 @@ class Day7:
             signal = 0
             # Execute program.
             for phase in settings:
-                prog = Intcode(data, False)
+                prog = Intcode(data)
                 _, signal = prog.exec([phase, signal])
             # Check if maximum is reached.
             max_thruster = max(max_thruster, signal)
-        print(f"Max: {max_thruster}")
+        print(f"Part1 max: {max_thruster}")
+        # Parse each combinations.
+        max_thruster = 0
+        for settings in itertools.permutations(range(5, 10), 5):
+            progs = [Intcode(data) for i in range(5)]
+            in_data = [[p] for p in settings]
+            signal = 0
+            halt_nb = 0
+            i = 0
+            # Execute program.
+            while halt_nb != 5:
+                # Add previous signal to input data, and resume program.
+                in_data[i].append(signal)
+                stat, out = progs[i].exec(in_data[i])
+                if stat == 0:
+                    # Program halt.
+                    halt_nb += 1
+                else:
+                    signal = out
+                i += 1
+                i %= 5
+            # Check if maximum is reached.
+            max_thruster = max(max_thruster, signal)
+        print(f"Part2 max: {max_thruster}")
 
 
 class Intcode:
