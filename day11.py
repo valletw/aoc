@@ -8,7 +8,8 @@ class Day11:
     def __init__(self, input_file):
         self.width = 100
         self.height = 110
-        self.grid = [[0] * self.width for i in range(self.height)]
+        self.grid1 = [[0] * self.width for i in range(self.height)]
+        self.grid2 = [[1] * self.width for i in range(self.height)]
         self.process(input_file)
 
     def process(self, input_file):
@@ -29,7 +30,7 @@ class Day11:
         painted = set()
         halt = False
         while not halt:
-            in_data = self.grid[robot_y][robot_x]
+            in_data = self.grid1[robot_y][robot_x]
             # Execute program to get new panel value.
             stat, panel = prog.exec(in_data)
             # Execute program to get new direction.
@@ -42,7 +43,7 @@ class Day11:
                 if in_data != panel:
                     painted.add((robot_x, robot_y))
                 # Set new panel color.
-                self.grid[robot_y][robot_x] = panel
+                self.grid1[robot_y][robot_x] = panel
                 # Update robot direction.
                 if direction == 0:
                     # Turn 90° left.
@@ -68,6 +69,58 @@ class Day11:
                     # Go left.
                     robot_x -= 1
         print(f"Painted panel: {len(painted)}")
+        # Initialise program, and set robot at center of the grid.
+        prog = Intcode(data)
+        robot_x = self.width // 2
+        robot_y = self.height // 2
+        robot_dir = 0
+        # Start program.
+        halt = False
+        while not halt:
+            in_data = self.grid2[robot_y][robot_x]
+            # Execute program to get new panel value.
+            stat, panel = prog.exec(in_data)
+            # Execute program to get new direction.
+            stat, direction = prog.exec(in_data)
+            if stat == 0:
+                # Stop robot if program halt.
+                halt = True
+            else:
+                # Set new panel color.
+                self.grid2[robot_y][robot_x] = panel
+                # Update robot direction.
+                if direction == 0:
+                    # Turn 90° left.
+                    if robot_dir == 0:
+                        robot_dir = 3
+                    else:
+                        robot_dir -= 1
+                else:
+                    # Turn 90° right.
+                    robot_dir += 1
+                    robot_dir %= 4
+                # Update robot position.
+                if robot_dir == 0:
+                    # Go up.
+                    robot_y -= 1
+                elif robot_dir == 1:
+                    # Go right.
+                    robot_x += 1
+                elif robot_dir == 2:
+                    # Go down.
+                    robot_y += 1
+                else:
+                    # Go left.
+                    robot_x -= 1
+        s = ""
+        for line in self.grid2:
+            for col in line:
+                if col == 1:
+                    s += str('#')
+                else:
+                    s += str(' ')
+            s += str('\n')
+        print(s)
 
 
 class Intcode:
