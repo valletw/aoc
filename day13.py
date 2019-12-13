@@ -6,7 +6,7 @@ class Day13:
     """ Day 13: Care Package """
     def __init__(self, input_file):
         self.x_max = 40
-        self.y_max = 40
+        self.y_max = 20
         self.grid = [[0] * self.x_max for i in range(self.y_max)]
         self.process(input_file)
 
@@ -21,23 +21,79 @@ class Day13:
             data.append(int(i))
         # Initialise program, and fill grid with blocks.
         prog = Intcode(data)
-        halt = False
-        while not halt:
+        while True:
             stat, out = prog.exec(0)
             if stat == 0:
-                halt = True
+                break
             else:
-                self.grid[out[1]][out[0]] = out[2]
+                x, y, t = out
+                self.grid[y][x] = t
         # Get number of block tile.
         block_nb = sum(self.grid[i].count(2) for i in range(self.y_max))
         print(f"Block tile: {block_nb}")
+        # Initialise program, and break all blocks.
+        prog = Intcode(data, 2)
+        score = 0
+        joystick = 0
+        ball = None
+        paddle = None
+        while True:
+            ball_new = None
+            paddle_new = None
+            stat, out = prog.exec(joystick)
+            if stat == 0:
+                break
+            else:
+                x, y, t = out
+                if x != -1 and y != 0:
+                    self.grid[y][x] = t
+                    if t == 4:
+                        ball_new = (x, y)
+                    elif t == 3:
+                        paddle_new = (x, y)
+                else:
+                    score = t
+                    continue
+            # Check if new ball or paddle position.
+            update = False
+            if ball_new is not None:
+                ball = ball_new
+                if paddle is not None:
+                    update = True
+            if paddle_new is not None:
+                paddle = paddle_new
+                if ball is not None:
+                    update = True
+            # New ball or paddle position, and ball going down, update joystick.
+            if update:
+                if paddle[0] < ball[0]:
+                    # Go right.
+                    joystick = 1
+                elif ball[0] < paddle[0]:
+                    # Go left.
+                    joystick = -1
+                else:
+                    # Neutral.
+                    joystick = 0
+                #self.print_grid()
+        print(f"Score: {score}")
 
+    def print_grid(self):
+        s = ""
+        p = [' ', '+', '#', '_', 'o']
+        for line in self.grid:
+            for col in line:
+                s += str(p[col])
+            s += str('\n')
+        print(s)
 
 class Intcode:
     """ Intcode program """
-    def __init__(self, memory, debug = False):
+    def __init__(self, memory, coins = 0, debug = False):
         self.memory = memory.copy()
         self.memory.extend([0] * (5 * 1024))
+        if coins != 0:
+            self.memory[0] = coins
         self.pc = 0
         self.rel = 0
         self.input_id = 0
