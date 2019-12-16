@@ -6,6 +6,7 @@ class Day16:
     """ Day 16: Flawed Frequency Transmission """
     def __init__(self, input_file):
         self.nb_phase = 100
+        self.repeat = 10000
         self.pattern = [0, 1, 0, -1]
         self.process(input_file)
 
@@ -15,26 +16,37 @@ class Day16:
             line = input.read().rstrip()
             for d in line:
                 signal.append(int(d))
-        for _ in range(self.nb_phase):
+        # Part 1: test FFT.
+        out = self.process_signal(signal.copy())
+        digits = ''.join(str(i) for i in out[:8])
+        print(f"Final output 8-digits (part1): {digits}")
+        # Part 2: repeat input signal.
+        offset = int(''.join(str(i) for i in signal[:7]))
+        out = self.process_signal(signal.copy() * self.repeat)
+        digits = ''.join(str(i) for i in out[offset:offset + 8])
+        print(f"Final output 8-digits (part2): {digits}")
+
+    def process_signal(self, signal):
+        for i in range(self.nb_phase):
+            if i % 10 == 0:
+                print('|', end=' ', flush=True)
+            else:
+                print('.', end=' ', flush=True)
             signal = self.fft(signal)
-        print(f"Final output 8-digits: {''.join(str(i) for i in signal[:8])}")
+        print('|')
+        return signal
 
     def fft(self, signal):
         output = []
         size = len(signal)
         for i in range(size):
-            pattern = self.generate_pattern(i + 1, size)
-            tmp = []
-            for d, p in zip(signal, pattern):
-                tmp.append(d * p)
-            output.append(abs(sum(tmp)) % 10)
+            tot = 0
+            mul = 1
+            for ofst in range(i, size, (i + 1) * 2):
+                tot += sum(signal[ofst:ofst + i + 1]) * mul
+                mul *= -1
+            output.append(abs(tot) % 10)
         return output
-
-    def generate_pattern(self, nb, size):
-        pattern = [p for p in self.pattern for i in range(nb)]
-        while len(pattern) < size + 1:
-            pattern.extend(pattern)
-        return pattern[1:size + 1]
 
 
 def parse_arguments():
