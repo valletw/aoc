@@ -63,15 +63,144 @@ class Day17:
                 intersections.add((x, y))
         align_sum = sum(x * y for x, y in intersections)
         print(f"Sum alignement parameters: {align_sum}")
+        # Find path.
+        path = []
+        x = self.robot[0]
+        y = self.robot[1]
+        dir = self.robot[2]
+        move = 0
+        nb_try = 0
+        while True:
+            if self.next_is_scaffold(x, y, dir):
+                # If first move, store rotation direction.
+                if move == 0:
+                    if nb_try == 1:
+                        path.append('R')
+                    elif nb_try == 2:
+                        path.append('L')
+                    nb_try = 0
+                # Update position for next move.
+                x, y = self.update_position(x, y, dir)
+                move += 1
+            else:
+                if move != 0:
+                    path.append(str(move))
+                    move = 0
+                if nb_try == 0:
+                    # Try turning right.
+                    dir += 1
+                    dir %= 4
+                    nb_try += 1
+                elif nb_try == 1:
+                    # Try turning left (but right before).
+                    dir -= 2
+                    if dir < 0:
+                        dir += 4
+                    nb_try += 1
+                else:
+                    # Can go back, halt.
+                    break
+        # Find sub functions.
+        fct = [('A', []), ('B', []), ('C', [])]
+        tmp = path.copy()
+        for f in range(len(fct)):
+            for i in range(20, 0, -2):
+                for j in range(i, len(tmp) - i, 2):
+                    if tmp[0:i] == tmp[j:j + i]:
+                        # Pattern found.
+                        fct[f] = (fct[f][0], tmp[0:i])
+                        # Remove pattern.
+                        tmp = tmp[i:j] + tmp[j + i:]
+                        break
+                if len(fct[f][1]) > 0:
+                    break
+        # Find main function (sub function order).
+        fct_main = []
+        i = 0
+        while i < len(path):
+            for name, pattern in fct:
+                if path[i:i + len(pattern)] == pattern:
+                    fct_main.append(name)
+                    i += len(pattern)
+        # Format command for program.
+        commands = self.convert_commands(fct_main)
+        for f in fct:
+            commands.extend(self.convert_commands(f[1]))
+        commands.extend(self.convert_commands(['n']))
+        # Initialise and execute program.
+        prog = Intcode(data, True)
+        dust = []
+        while True:
+            stat, out = prog.exec(commands)
+            if stat != 0:
+                dust.append(out)
+            else:
+                break
+        print(''.join([str(chr(d)) for d in dust]))
+        #print(f"Dust: {dust}")
+
+    def next_is_scaffold(self, x, y, dir):
+        x, y = self.update_position(x, y, dir)
+        if (x, y) in self.scaffolds:
+            return 1
+        else:
+            return 0
+
+    def update_position(self, x, y, dir):
+        if dir == 0:
+            # Up.
+            y -= 1
+        elif dir == 1:
+            # Right.
+            x += 1
+        elif dir == 2:
+            # Down.
+            y += 1
+        elif dir == 3:
+            # Left.
+            x -= 1
+        return x, y
+
+    def convert_commands(self, cmd):
+        a = []
+        if len(cmd) > 0:
+            for i in range(len(cmd)):
+                c = cmd[i]
+                try:
+                    c = int(c)
+                    # It is an integer.
+                    if c < 10:
+                        a.append(ord(str(c)))
+                    else:
+                        # Integer too big for ASCII, divide it by 2.
+                        div = c // 2
+                        res = c - div
+                        a.append(ord(str(div)))
+                        a.append(ord(','))
+                        a.append(ord(str(res)))
+                except ValueError:
+                    # Not an integer, direct conversion to ASCII.
+                    a.append(ord(c))
+                # Last character, at new line.
+                if i == len(cmd) - 1:
+                    a.append(ord('\n'))
+                # Not last character, at separator.
+                else:
+                    a.append(ord(','))
+        return a
 
     def print_grid(self):
         s = ""
         for y in range(self.y_max):
             for x in range(self.x_max):
-                if (x, y) in self.scaffolds:
+                if x == self.robot[0] and y == self.robot[1]:
+                    if self.robot[3]:
+                        d = ['^', '>', 'v', '<']
+                        s += str(d[self.robot[2]])
+                    else:
+                        s += str('X')
+                elif (x, y) in self.scaffolds:
                     s += str('#')
-                elif x == self.robot[0] and y == self.robot[1]:
-                    s += str('R')
                 else:
                     s += str(' ')
             s += str("\n")
@@ -80,13 +209,16 @@ class Day17:
 
 class Intcode:
     """ Intcode program """
-    def __init__(self, memory, debug = False):
+    def __init__(self, memory, wake_up = False, debug = False):
         self.memory = memory.copy()
         self.memory.extend([0] * (5 * 1024))
         self.pc = 0
         self.rel = 0
         self.cmd = ""
         self.debug = debug
+        self.input_id = 0
+        if wake_up:
+            self.memory[0] = 2
 
     def exec(self, in_params):
         out_params = 0
@@ -173,9 +305,10 @@ class Intcode:
 
     def inst_stdin(self, mode, in_params):
         args, _, dbg = self.read_params(mode, 1)
-        self.cmd  = f"{self.pc:04d}: in {dbg[0]}, {in_params}"
+        self.cmd  = f"{self.pc:04d}: in {dbg[0]}, {in_params[self.input_id]}"
         self.cmd += f"    ; {args[0]}"
-        self.memory[args[0]] = in_params
+        self.memory[args[0]] = in_params[self.input_id]
+        self.input_id += 1
         # Move to next opcode.
         self.pc += 2
         return False
