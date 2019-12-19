@@ -1,30 +1,86 @@
 #! /usr/bin/env python3
 import argparse
+import math
 
 
 class Day19:
     """ Day 19: Tractor Beam """
     def __init__(self, input_file):
         self.grid = Grid()
+        self.data = []
+        self.ship_size = 100
         self.process(input_file)
 
     def process(self, input_file):
         list = {}
-        data = []
         # Read all input data.
         with open(input_file, "r") as input:
             list = str(input.read()).split(",")
         # Convert input data to integer array.
         for i in list:
-            data.append(int(i))
+            self.data.append(int(i))
         # Parse each grid position.
         for y in self.grid.r_height():
             for x in self.grid.r_width():
-                # Initialise program, and fet drone status.
-                _, out = Intcode(data).exec([x, y])
+                # Initialise program, and get drone status.
+                _, out = Intcode(self.data).exec([x, y])
                 if out == 1:
                     self.grid.beams.add((x, y))
         print(f"Points affected: {len(self.grid.beams)}")
+        # Part 2: follow left line until (X+100, Y-100) fit.
+        # Start from bottom left point.
+        (x, y) = self.grid.beams_width()
+        # Get x increment ratio.
+        xr = x / 50
+        # Do first increment (+100).
+        x += int(xr * 50)
+        y += 50
+        while True:
+            x = self.adjust_x(x, y)
+            # Check top right corner ship position.
+            _, out = Intcode(self.data).exec([
+                x + self.ship_size, y - self.ship_size])
+            if out == 1:
+                # Adjust until the top right corner is on edge.
+                top = 1
+                right = 1
+                while top == 1 or right == 1:
+                    _, top = Intcode(self.data).exec([
+                        x + self.ship_size    , y - self.ship_size - 1])
+                    _, right = Intcode(self.data).exec([
+                        x + self.ship_size + 1, y - self.ship_size])
+                    if top == 1 or right == 1:
+                        y -= 1
+                        x = self.adjust_x(x, y)
+                break
+            else:
+                # Corner not in beam shape, move to next position.
+                x += int(xr * self.ship_size)
+                y += self.ship_size
+        # Ship fit in beam shape, get closest position (top left corner).
+        y -= self.ship_size
+        print(f"Ship position: {x * 10000 + y}")
+
+    def adjust_x(self, x, y):
+        ignore_next = False
+        # Check the x position on left, shall be outside the beam shape.
+        out = 1
+        while out == 1:
+            _, out = Intcode(self.data).exec([x - 1, y])
+            if out == 1:
+                # Left position inside, move left.
+                x -= 1
+                # Ignore next verification, position will be OK.
+                ignore_next = True
+        # Check the current x position, shall be inside the beam shape.
+        if not ignore_next:
+            out = 0
+            while out == 0:
+                _, out = Intcode(self.data).exec([x, y])
+                if out == 0:
+                    # Position outside, move right.
+                    x += 1
+        return x
 
 
 class Grid:
@@ -38,6 +94,18 @@ class Grid:
 
     def r_height(self):
         return range(self.height)
+
+    def beams_width(self, height=None):
+        if height is None:
+            y = self.height - 1
+        else:
+            y = height
+        first = None
+        for x in self.r_width():
+            if (x, y) in self.beams:
+                first = (x, y)
+                break
+        return first
 
     def print(self):
         s = ""
