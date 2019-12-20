@@ -13,7 +13,9 @@ class Day20:
     def process(self):
         _, costs = self.a_star_search()
         print(f"Steps: {costs[self.grid.goal]}")
-        return
+        self.grid.recursion_enable(True)
+        _, costs = self.a_star_search()
+        print(f"Steps (recursive): {costs[self.grid.goal]}")
 
     def reconstruct_path(self, came_from):
         start = self.grid.start
@@ -28,13 +30,13 @@ class Day20:
         return path
 
     def heuristic(self, a, b):
-        (x1, y1) = a
-        (x2, y2) = b
+        x1, y1, _ = a
+        x2, y2, _ = b
         return abs(x1 - x2) + abs(y1 - y2)
 
     def a_star_search(self):
-        start = self.grid.start
-        goal = self.grid.goal
+        start = (self.grid.start[0], self.grid.start[1], 0)
+        goal = (self.grid.goal[0], self.grid.goal[1], 0)
         frontier = []
         heapq.heappush(frontier, (0, start))
         came_from = {}
@@ -64,6 +66,11 @@ class Grid:
         self.walls = set()
         self.voids = set()
         self.portals = dict()
+        self.portals_outer = set()
+        self.recursion_en = False
+
+    def recursion_enable(self, en: bool):
+        self.recursion_en = en
 
     def load(self, input_file):
         portals = dict()
@@ -136,9 +143,16 @@ class Grid:
             else:
                 # Portal not known yet, save entry point with name as key.
                 self.portals[name] = [entry]
+            # Check if entry is on outer.
+            if entry[0] <= 2 or self.width - 4 <= entry[0] \
+                or entry[1] <= 2 or self.height - 3 <= entry[1]:
+                self.portals_outer.add(entry)
         # Get start and end position.
         self.start = self.portals['AA'][0]
         self.goal = self.portals['ZZ'][0]
+        # Remove start and end position from outer portals.
+        self.portals_outer.remove(self.start)
+        self.portals_outer.remove(self.goal)
 
     def r_width(self):
         return range(self.width)
@@ -152,28 +166,55 @@ class Grid:
         else:
             return a
 
-    def in_bounds(self, p):
-        x, y = p
+    def in_bounds(self, a):
+        try:
+            x, y, _ = a
+        except ValueError:
+            x, y = a
         return 0 <= x < self.width and 0 <= y < self.height
 
-    def passable(self, p):
-        return p not in self.walls | self.voids
+    def passable(self, a):
+        try:
+            x, y, lvl = a
+        except ValueError:
+            x, y = a
+            lvl = 0
+        p = (x, y)
+        if self.recursion_en:
+            if lvl == 0:
+                # Top level: Outer portals are walls.
+                return p not in self.walls | self.voids | self.portals_outer
+            else:
+                # Outermost level: Start and end position are walls.
+                return p not in self.walls | self.voids | self.start | self.goal
+        else:
+            return p not in self.walls | self.voids
 
     def neighbors(self, p):
-        x, y = p
-        search = [(x + 1, y), (x, y - 1), (x - 1, y), (x, y + 1)]
+        x, y, lvl = p
+        search = [(x + 1, y, lvl), (x, y - 1, lvl),
+            (x - 1, y, lvl), (x, y + 1, lvl)]
         if (x + y) % 2 == 0:
             search.reverse() # aesthetics
         search = filter(self.in_bounds, search)
         search = filter(self.passable, search)
         results = []
         for s in search:
-            if s in self.portals.keys():
+            x, y, lvl = s
+            if (x, y) in self.portals.keys():
                 # Teleport to other portal, cost 2.
-                results.append((self.portals[s], 2))
+                portal = self.portals[(x, y)]
+                if self.recursion_enable:
+                    if (x, y) in self.portals_outer:
+                        lvl -= 1
+                    else:
+                        lvl += 1
+                else:
+                    lvl = 0
+                results.append(((portal[0], portal[1], lvl), 2))
             else:
                 # No teleportation, cost 1.
-                results.append((s , 1))
+                results.append(((x, y, lvl) , 1))
         return results
 
     def print(self):
