@@ -5,10 +5,6 @@ import argparse
 class Day21:
     """ Day 21: Springdroid Adventure """
     def __init__(self, input_file):
-        self.x_max = 0
-        self.y_max = 0
-        self.scaffolds = set()
-        self.robot = (0, 0, 0, False)
         self.process(input_file)
 
     def process(self, input_file):
@@ -20,14 +16,35 @@ class Day21:
         # Convert input data to integer array.
         for i in list:
             data.append(int(i))
-        # Initialise program, and program sprindroid (hard-coded).
-        prog = Intcode(data)
+        # Part 1 (hard-coded).
         inst = ""
         inst += str("NOT A J\n")
         inst += str("NOT C T\n")
         inst += str("AND D T\n")
         inst += str("OR T J\n")
         inst += str("WALK\n")
+        print(self.program(data, inst))
+        # Part 2 (hard-coded).
+        inst = ""
+        inst += str("NOT A J\n")
+        inst += str("AND D J\n")
+        inst += str("NOT B T\n")
+        inst += str("AND D T\n")
+        inst += str("AND H T\n")
+        inst += str("OR T J\n")
+        inst += str("NOT C T\n")
+        inst += str("AND D T\n")
+        inst += str("AND E T\n")
+        inst += str("OR T J\n")
+        inst += str("NOT C T\n")
+        inst += str("AND D T\n")
+        inst += str("AND H T\n")
+        inst += str("OR T J\n")
+        inst += str("RUN\n")
+        print(self.program(data, inst))
+
+    def program(self, data, inst):
+        prog = Intcode(data)
         s = ""
         while True:
             stat, out = prog.exec(prog.list_to_ascii(inst))
@@ -37,7 +54,7 @@ class Day21:
                 s += str(prog.ascii_to_char(out))
             else:
                 s += str(out)
-        print(s)
+        return s
 
 
 class Intcode:
