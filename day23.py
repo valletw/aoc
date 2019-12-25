@@ -19,19 +19,35 @@ class Day23:
             data.append(int(i))
         # Initialise network.
         computers = [Computer(data, i) for i in range(self.nb_computer)]
-        pkt = 0
-        addr = 0
-        while addr != 255:
+        first_nat_pkt = None
+        y = 0
+        nat_pkt = None
+        while True:
+            nb_idle = 0
             for i in range(self.nb_computer):
                 c = computers[i]
-                if c.exec():
+                ret = c.exec()
+                if ret > 0:
+                    if ret == 255:
+                        nb_idle += 1
+                        continue
                     if c.has_received():
                         addr, pkt = c.read()
                         if addr == 255:
-                            break
+                            if first_nat_pkt is None:
+                                first_nat_pkt = pkt
+                            nat_pkt = pkt
                         else:
                             computers[addr].write(pkt)
-        print(f"Address 255 received: {pkt}")
+            if nb_idle == 50 and nat_pkt is not None:
+                # All computer are idle, send resume.
+                computers[0].write(nat_pkt)
+                if y == nat_pkt[1]:
+                    break
+                else:
+                    y = nat_pkt[1]
+        print(f"First NAT packet received: {first_nat_pkt}")
+        print(f"First C0 Y value: {y}")
 
 
 class Computer:
@@ -52,7 +68,7 @@ class Computer:
         addr = self.qout[0]
         pkt = self.qout[1:3]
         self.qout = self.qout[3:]
-        self.pdebug(f"read @{addr:03d} pkt={pkt} qout={self.qout}")
+        self.pdebug(f"read @{addr:03d} pkt={pkt}")
         return addr, pkt
 
     def write(self, pkt):
@@ -67,13 +83,16 @@ class Computer:
             param = -1
         stat, out = self.prog.exec(param)
         self.pdebug(f"exec stat={stat} out={out}")
+        ret = stat
         if stat == 1:
             # New output parameter.
             self.qout.append(out)
         elif stat == 2 and param != -1:
             # Input parameter has been read.
             self.qin.pop(0)
-        return stat != 0
+        elif stat == 2 and param == -1:
+            ret = 255
+        return ret
 
     def pdebug(self, str):
         if self.debug:
