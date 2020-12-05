@@ -17,11 +17,19 @@ class Day5:
             for line in input:
                 partition.append(line.rstrip())
         highest_seat_id = 0
+        seat_list = set()
+        # Parse boarding pass.
         for part in partition:
             seat_id = self.get_seat_id(*self.get_position(part))
             if seat_id > highest_seat_id:
                 highest_seat_id = seat_id
+            seat_list.add(seat_id)
+        # Find missing seat.
+        seat_sorted = sorted(seat_list)
+        missing_seat = [x for x in range(seat_sorted[0], seat_sorted[-1] + 1) \
+            if x not in seat_sorted]
         print(f"Part 1: {highest_seat_id}")
+        print(f"Part 2: {missing_seat[0]}")
 
     def get_seat_id(self, row, col) -> int:
         return row * 8 + col
