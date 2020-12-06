@@ -8,20 +8,28 @@ class Day6:
         self.process(input_file)
 
     def process(self, input_file):
-        groups = list()
+        question_list = [chr(c) for c in range(0x61, 0x7B)]
+        groups_1 = list()
+        groups_2 = list()
         group_id = 0
-        groups.append(set())
+        groups_1.append(set())
+        groups_2.append({"nb": 0, "raw": ""})
         with open(input_file, "r") as input:
             for line in input:
                 line = line.rstrip()
                 if line == "":
                     group_id += 1
-                    groups.append(set())
+                    groups_1.append(set())
+                    groups_2.append({"nb": 0, "raw": ""})
                 else:
                     for response in line:
-                        groups[group_id].add(response)
-        response_nb = sum(len(resp) for resp in groups)
-        print(f"Part 1: {response_nb}")
+                        groups_1[group_id].add(response)
+                    groups_2[group_id]["nb"] += 1
+                    groups_2[group_id]["raw"] += line
+        response_nb_1 = sum(len(resp) for resp in groups_1)
+        response_nb_2 = sum(g["raw"].count(c) == g["nb"] for c in question_list for g in groups_2)
+        print(f"Part 1: {response_nb_1}")
+        print(f"Part 2: {response_nb_2}")
 
 
 def parse_arguments():
