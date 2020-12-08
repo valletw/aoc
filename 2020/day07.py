@@ -21,6 +21,16 @@ class Day7:
                     return 1
         return 0
 
+    def count_bag(self, color: str) -> int:
+        count = 0
+        for _, bag in enumerate(self._bag_rules[color].items()):
+            bag_c, bag_n = bag
+            if bag_c == "none":
+                return 0
+            else:
+                count += self.count_bag(bag_c) * bag_n + bag_n
+        return count
+
     def process(self, input_file):
         with open(input_file, "r") as input:
             for line in input:
@@ -40,13 +50,14 @@ class Day7:
                         self._bag_rules[main_bag]["none"] = 0
                     else:
                         nb, bag = cont.split(" ", 1)
-                        self._bag_rules[main_bag][bag] = nb
+                        self._bag_rules[main_bag][bag] = int(nb)
         bag_nb = 0
         for bag in self._bag_rules.keys():
             if bag == self._BAG:
                 continue
             bag_nb += self.find_bag(bag)
         print(f"Part 1: {bag_nb}")
+        print(f"Part 2: {self.count_bag(self._BAG)}")
 
 
 def parse_arguments():
