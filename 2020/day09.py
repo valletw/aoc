@@ -29,7 +29,23 @@ class Day9:
             if not found:
                 invalid_number = num
                 break
+        combination = list()
+        combination_found = False
+        for num1_id, num1 in enumerate(data):
+            combination = [num1]
+            count = num1
+            for num2 in data[num1_id + 1:]:
+                combination.append(num2)
+                count += num2
+                if count == invalid_number:
+                    combination_found = True
+                    break
+                elif count > invalid_number:
+                    break
+            if combination_found:
+                break
         print(f"Part 1: {invalid_number}")
+        print(f"Part 2: {min(combination) + max(combination)}")
 
 
 def parse_arguments():
