@@ -19,7 +19,21 @@ class Day10:
         differences = list()
         for idx in range(len(adapters) - 1):
             differences.append(adapters[idx + 1] - adapters[idx])
+        permutations_factor = [0, 0, 2, 4, 7]
+        permutations = list()
+        count = 0
+        for diff in differences:
+            if diff == 1:
+                count += 1
+            else:
+                if count > 1:
+                    permutations.append(count)
+                count = 0
+        ways = 1
+        for p in permutations:
+            ways *= permutations_factor[p]
         print(f"Part 1: {differences.count(1) * differences.count(3)}")
+        print(f"Part 2: {ways}")
 
 
 def parse_arguments():
