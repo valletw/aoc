@@ -21,6 +21,7 @@ class Day11:
                         self._seat.add((y, x))
                     self._x_max = x + 1
                 self._y_max = y + 1
+        ### Part 1 (adjacent).
         # First round, all seat become occupied.
         self._occupied = self._seat.copy()
         # Second round, release occupied seat.
@@ -44,6 +45,41 @@ class Day11:
                     self._occupied.add(seat)
                 to_take.clear()
         print(f"Part 1: {len(self._occupied)}")
+        ### Part 2 (on sight).
+        # First round, all seat become occupied.
+        self._occupied = self._seat.copy()
+        # Second round, release occupied seat.
+        to_release = set()
+        to_take = set()
+        while True:
+            stop = 0
+            for seat in self._seat:
+                if self.is_occupied(*seat) and self.nb_see_seat_occupied(*seat) >= 5:
+                    to_release.add(seat)
+            if len(to_release) != 0:
+                for seat in to_release:
+                    self._occupied.remove(seat)
+                to_release.clear()
+            else:
+                stop += 1
+            for seat in self._seat:
+                if not self.is_occupied(*seat) and self.nb_see_seat_occupied(*seat) == 0:
+                    to_take.add(seat)
+            if len(to_take) != 0:
+                for seat in to_take:
+                    self._occupied.add(seat)
+                to_take.clear()
+            else:
+                stop += 1
+            if stop == 2:
+                break
+        print(f"Part 2: {len(self._occupied)}")
+
+    def in_grid(self, y: int, x: int) -> bool:
+        if 0 <= y and y < self._y_max \
+            and 0 <= x and x < self._x_max:
+            return True
+        return False
 
     def is_seat(self, y: int, x: int) -> bool:
         return (y, x) in self._seat
@@ -61,6 +97,27 @@ class Day11:
         for pos in test:
             if self.is_occupied(*pos):
                 count += 1
+        return count
+
+    def nb_see_seat_occupied(self, y: int, x: int) -> int:
+        directions = [
+            # (y, x) clock-wise.
+            # (-1,-1) (-1, 0) (-1, 1)
+            # ( 0,-1)    P    ( 0, 1)
+            # ( 1,-1) ( 1, 0) ( 1, 1)
+            (-1, 0), (-1, 1), (0, 1), (1, 1), (1, 0), (1, -1), (0, -1), (-1, -1)
+        ]
+        count = 0
+        for direction in directions:
+            new_pos = (y, x)
+            while True:
+                new_pos = (new_pos[0] + direction[0], new_pos[1] + direction[1])
+                if not self.in_grid(*new_pos):
+                    break
+                if self.is_seat(*new_pos):
+                    if self.is_occupied(*new_pos):
+                        count += 1
+                    break
         return count
 
     def print(self):
