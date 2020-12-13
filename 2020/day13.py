@@ -17,13 +17,13 @@ class Day13:
             for line in input:
                 data.append(line.rstrip())
         self._time_departure = int(data[0])
-        for bus in data[1].split(","):
+        for idx, bus in enumerate(data[1].split(",")):
             if bus != "x":
-                self._bus_line.append(int(bus))
+                self._bus_line.append((int(bus), idx))
         next_departure = set()
         for bus in self._bus_line:
-            it = math.ceil(self._time_departure / bus)
-            next_departure.add((it * bus, bus))
+            it = math.ceil(self._time_departure / bus[0])
+            next_departure.add((it * bus[0], bus[0]))
         next_departure = sorted(next_departure)
         time_wait = next_departure[0][0] - self._time_departure
         print(f"Part 1: {time_wait * next_departure[0][1]}")
