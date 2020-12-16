@@ -32,16 +32,22 @@ class Day16:
                         rule, ranges = line.split(": ")
                         self._rules[rule] = ranges.split(" or ")
         error_rate = 0
+        field_unmatch = [[] for _ in range(len(self._ticket))]
         for ticket in self._nearby:
-            for field in ticket:
+            for idx, field in enumerate(ticket):
                 check_success = 0
-                for _, (_, limits) in enumerate(self._rules.items()):
+                for _, (rule, limits) in enumerate(self._rules.items()):
                     for limit in limits:
                         l_min, l_max = [int(l) for l in limit.split("-")]
                         if l_min <= field and field <= l_max:
                             check_success += 1
+                        else:
+                            field_unmatch[idx].append(rule)
                 if check_success == 0:
                     error_rate += field
+        #field_unmatch = [sorted(list(set(f))) for f in field_unmatch]
+        for idx, unmatch in enumerate(field_unmatch):
+            print(idx, unmatch)
         print(f"Part 1: {error_rate}")
 
 
