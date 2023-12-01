@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 import argparse
 from typing import Dict, Any, List
+from day01 import process as d01
 
 
 process: Dict[int, Any] = {
+    1: d01
 }
 
 
