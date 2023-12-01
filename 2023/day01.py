@@ -1,6 +1,40 @@
 from typing import List, Optional
 
 
+def digit_replace(puzzle_in: List[str]) -> List[str]:
+    output: List[str] = []
+    search_replace = {
+        "one": "1",
+        "two": "2",
+        "three": "3",
+        "four": "4",
+        "five": "5",
+        "six": "6",
+        "seven": "7",
+        "eight": "8",
+        "nine": "9"
+    }
+    for line in puzzle_in:
+        # Find a digit-letter before the first true digit.
+        i = 0
+        while not line[i].isdigit():
+            for search, replace in search_replace.items():
+                if line[i:].startswith(search):
+                    line = line.replace(search, replace, 1)
+                    break
+            i += 1
+        # Find a digit-letter before the last true digit (reverse parsing).
+        i = len(line) - 1
+        while not line[i].isdigit():
+            for search, replace in search_replace.items():
+                if line[i:].startswith(search):
+                    line = line.replace(search, replace, 1)
+                    break
+            i -= 1
+        output.append(line)
+    return output
+
+
 def parse(puzzle_in: List[str]) -> int:
     digit: List[int] = []
     # Parse all lines.
@@ -11,7 +45,7 @@ def parse(puzzle_in: List[str]) -> int:
         for c in line:
             # Check if it is an integer.
             # Store first digit if not set, and update each time last.
-            if c >= '0' and c <= '9':
+            if c.isdigit():
                 if first is None:
                     first = c
                 else:
@@ -28,3 +62,4 @@ def parse(puzzle_in: List[str]) -> int:
 
 def process(puzzle_in: List[str]):
     print(f"Part 1: {parse(puzzle_in)}")
+    print(f"Part 2: {parse(digit_replace(puzzle_in))}")
