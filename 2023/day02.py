@@ -55,7 +55,29 @@ def check_combinaison(
     return game_valid
 
 
+def minimal_cubes_set(games: GAMES) -> List[int]:
+    powers: List[int] = []
+    # Parse each games.
+    for game in games:
+        # Find maximum value for each cube to determine minimal set.
+        r_max = 0
+        g_max = 0
+        b_max = 0
+        for cubes in game:
+            if cubes[R] > r_max:
+                r_max = cubes[R]
+            if cubes[G] > g_max:
+                g_max = cubes[G]
+            if cubes[B] > b_max:
+                b_max = cubes[B]
+        # Compute power of the combinaison.
+        powers.append(r_max * g_max * b_max)
+    return powers
+
+
 def process(puzzle_in: List[str]):
     games = extract_games(puzzle_in)
     games_valid = check_combinaison(games, 12, 13, 14)
     print(f"Part 1: {sum(games_valid)}")
+    powers = minimal_cubes_set(games)
+    print(f"Part 2: {sum(powers)}")
