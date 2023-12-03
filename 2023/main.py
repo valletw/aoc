@@ -3,12 +3,14 @@ import argparse
 from typing import Dict, Any, List
 from day01 import process as d01
 from day02 import process as d02
+from day03 import process as d03
 from day04 import process as d04
 
 
 process: Dict[int, Any] = {
     1: d01,
     2: d02,
+    3: d03,
     4: d04,
 }
 
