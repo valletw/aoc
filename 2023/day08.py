@@ -1,3 +1,4 @@
+from math import lcm
 from typing import List, Tuple, Dict
 
 
@@ -23,17 +24,29 @@ def parse(puzzle_in: List[str]) -> Tuple[Steps, Plan]:
     return steps, plan
 
 
-def navigate(steps: Steps, plan: Plan) -> int:
+def navigate(steps: Steps, plan: Plan, start: str, end_condition) -> int:
     count = 0
     idx = 0
-    pos = "AAA"
-    while pos != "ZZZ":
+    pos = start
+    while not end_condition(pos):
         count += 1
         pos = plan[pos][steps[idx]]
         idx = (idx + 1) % len(steps)
     return count
 
 
+def navigate_ghost(steps: Steps, plan: Plan) -> int:
+    # Find all starts.
+    starts = [s for s in plan if s[-1] == 'A']
+    # Count the number of steps to arrived at the end.
+    counts: List[int] = [
+        navigate(steps, plan, s, lambda p: p[-1] == "Z") for s in starts
+    ]
+    # Find the commun multiplier for each ways.
+    return lcm(*counts)
+
+
 def process(puzzle_in: List[str]):
     steps, plan = parse(puzzle_in)
-    print(f"Part 1: {navigate(steps, plan)}")
+    print(f"Part 1: {navigate(steps, plan, 'AAA', lambda p: p == 'ZZZ')}")
+    print(f"Part 2: {navigate_ghost(steps, plan)}")
