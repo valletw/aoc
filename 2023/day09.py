@@ -24,3 +24,4 @@ def find_complement(hist: History) -> int:
 def process(puzzle_in: List[str]):
     sensors = parse(puzzle_in)
     print(f"Part 1: {sum(find_complement(s) for s in sensors)}")
+    print(f"Part 2: {sum(find_complement(s[::-1]) for s in sensors)}")
