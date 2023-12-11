@@ -16,8 +16,11 @@ def parse(puzzle_in: List[str]) -> Tuple[Set[Position], int, int]:
 
 
 def cosmic_expansion(
-        galaxies: Set[Position], row_max: int, col_max: int) -> Set[Position]:
-    def _expand(galaxies: Set[Position], set_id: int, pmax: int) -> List[int]:
+        galaxies: Set[Position], row_max: int, col_max: int,
+        expansion: int = 2) -> Set[Position]:
+    def _expand(
+            galaxies: Set[Position], set_id: int, pmax: int,
+            expansion: int) -> List[int]:
         count = [
             len(list(filter(lambda g: g[set_id] == i, galaxies)))
             for i in range(0, pmax)
@@ -26,13 +29,13 @@ def cosmic_expansion(
         exp_count = 0
         for c in count:
             if c == 0:
-                exp_count += 1
+                exp_count += expansion - 1
             exp.append(exp_count)
         return exp
 
     galaxies_expanded: Set[Position] = set()
-    row_exp = _expand(galaxies, 0, row_max)
-    col_exp = _expand(galaxies, 1, col_max)
+    row_exp = _expand(galaxies, 0, row_max, expansion)
+    col_exp = _expand(galaxies, 1, col_max, expansion)
     for row in range(0, row_max):
         for col in range(0, col_max):
             if (row, col) in galaxies:
@@ -62,5 +65,8 @@ def dump(galaxies: Set[Position], row_max: int, col_max: int):
 
 
 def process(puzzle_in: List[str]):
-    galaxies = cosmic_expansion(*parse(puzzle_in))
+    parse_val = parse(puzzle_in)
+    galaxies = cosmic_expansion(*parse_val)
     print(f"Part 1: {sum(d[0] for d in distances(galaxies))}")
+    galaxies_older = cosmic_expansion(*parse_val, 1000000)
+    print(f"Part 2: {sum(d[0] for d in distances(galaxies_older))}")
