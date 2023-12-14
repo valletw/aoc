@@ -13,6 +13,7 @@ from day09 import process as d09
 from day10 import process as d10
 from day11 import process as d11
 from day12 import process as d12
+from day14 import process as d14
 
 
 process: Dict[int, Any] = {
@@ -28,6 +29,7 @@ process: Dict[int, Any] = {
     10: d10,
     11: d11,
     12: d12,
+    14: d14,
 }
 
 
