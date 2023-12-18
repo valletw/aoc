@@ -3,19 +3,22 @@ from typing import List, Tuple, Dict
 
 # (ROW, COL)
 Position = Tuple[int, int]
-# (DIRECTION, LENGTH, COLOR)
-Plan = List[Tuple[str, int, int]]
+# (DIRECTION, LENGTH, DIRECTION_2, LENGTH_2)
+Plan = List[Tuple[str, int, str, int]]
 
 
 def parse(puzzle_in: List[str]) -> Plan:
     plan: Plan = []
+    dirs = ["R", "D", "L", "U"]
     for line in puzzle_in:
         direction, length, color_s = line.split()
-        plan.append((direction, int(length), int(color_s[2:-1], 16)))
+        length_2 = int(color_s[2:-2], 16)
+        direction_2 = int(color_s[-2])
+        plan.append((direction, int(length), dirs[direction_2], length_2))
     return plan
 
 
-def dig(plan: Plan) -> Tuple[List[Position], int]:
+def dig(plan: Plan, p2: bool = False) -> Tuple[List[Position], int]:
     dirs: Dict[str, Position] = {
         "U": (-1, 0),
         "D": (1, 0),
@@ -26,10 +29,16 @@ def dig(plan: Plan) -> Tuple[List[Position], int]:
     corners: List[Position] = []
     edges = 0
     # Parse each plan instruction.
-    for D, L, _ in plan:
+    for D, L, D2, L2 in plan:
+        if p2:
+            direction = D2
+            length = L2
+        else:
+            direction = D
+            length = L
         # Compute new corner.
-        end = tuple(a + L * b for a, b in zip(pos, dirs[D]))
-        edges += L
+        end = tuple(a + length * b for a, b in zip(pos, dirs[direction]))
+        edges += length
         corners.append(end)
         pos = end
     return corners, edges
@@ -66,3 +75,4 @@ def dump(trench: List[Position]):
 def process(puzzle_in: List[str]):
     plan = parse(puzzle_in)
     print(f"Part 1: {area(*dig(plan))}")
+    print(f"Part 2: {area(*dig(plan, True))}")
